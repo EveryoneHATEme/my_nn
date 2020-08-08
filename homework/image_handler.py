@@ -32,7 +32,7 @@ class ImageHandler:
 
             elif os.path.isfile(full_sub_path):
                 labels_list.append(full_sub_path.split(os.path.sep)[-2])
-                image = cv2.imread(full_sub_path)
+                image = cv2.cvtColor(cv2.imread(full_sub_path), cv2.COLOR_BGR2GRAY)
                 filtered_image = cv2.resize(image, (128, 128))
                 images_list.append(filtered_image)
 
@@ -40,8 +40,8 @@ class ImageHandler:
 
     @staticmethod
     def prepare_image(image):
-        result_image = cv2.resize(image, (128, 128)).astype('float') / 255.0
-        return result_image.reshape((1, result_image.shape[0], result_image.shape[1], result_image.shape[2]))
+        result_image = cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), (128, 128)).astype('float') / 255.0
+        return result_image.reshape((1, result_image.shape[0], result_image.shape[1], 1))
 
     @staticmethod
     def open_image(path):
@@ -49,9 +49,14 @@ class ImageHandler:
 
     @staticmethod
     def show_result(image, text):
-        cv2.putText(image, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 2)
+        cv2.putText(image, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 191, 255), 2)
         cv2.imshow('Result', image)
         cv2.waitKey(0)
+
+    @staticmethod
+    def save_result(image, text, filename):
+        cv2.putText(image, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 191, 255), 2)
+        cv2.imwrite(f'output/images/{filename}', image)
 
     @staticmethod
     def download_images():

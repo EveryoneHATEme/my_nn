@@ -1,8 +1,9 @@
+import os
+import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers.core import Flatten, Dense, Dropout
 from keras.layers.convolutional import Conv2D, MaxPooling2D
-from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 
@@ -14,17 +15,21 @@ weights_path = 'output/weights_inception.hdf5'
 
 labels, data = ImageHandler.prepare_images('images')
 
-train_x, test_x, train_y, test_y = train_test_split(data, labels, test_size=.25, random_state=42)
+train_x, test_x, train_y, test_y = train_test_split(data, labels, test_size=.25)
 
 lb = LabelBinarizer()
 train_y = lb.fit_transform(train_y)
 test_y = lb.transform(test_y)
 
-image_data_generator = ImageDataGenerator(horizontal_flip=True)
-train_generator = image_data_generator.flow(train_x, train_y, batch_size=batch_size)
+train_x = np.reshape(train_x, tuple([*train_x.shape] + [1]))
+test_x = np.reshape(test_x, tuple([*test_x.shape] + [1]))
+train_y = np.reshape(train_y, tuple([*train_y.shape] + [1]))
+test_y = np.reshape(test_y, tuple([*test_y.shape] + [1]))
+
+print(train_x.shape)
 
 model = Sequential()
-model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 3), padding='same'))
+model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 1), padding='same'))
 model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
 model.add(MaxPooling2D((3, 3)))
 model.add(Dropout(0.25))
@@ -46,16 +51,20 @@ if weights_path is not None:
 
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy'])
 
-for i in range(1, 12):
-    print(i)
-    print(1 - model.predict(ImageHandler.prepare_image(ImageHandler.open_image(f'test/cats/{i}.jpg')))[0][0])
-
-for i in range(0, 11):
-    print(i)
-    print(model.predict(ImageHandler.prepare_image(ImageHandler.open_image(f'test/others/{i}.jpg')))[0][0])
-
-#fit_history = model.fit(train_generator, epochs=25, validation_data=(test_x, test_y))
+#fit_history = model.fit(train_x, train_y, epochs=25, validation_data=(test_x, test_y))
 
 #model.save_weights('output/weights_inception.hdf5')
 
-#print(model.predict(ImageHandler.prepare_image(ImageHandler.open_image('031.jpg')), batch_size=batch_size))
+for i, filename in enumerate(os.listdir('test/cats')):
+    image = ImageHandler.prepare_image(ImageHandler.open_image(f'test/cats/{filename}'))
+    prediction = 1 - model.predict(image)[0][0]
+    ImageHandler.save_result(ImageHandler.open_image(f'test/cats/{filename}'),
+                             f'{prediction * 100:.2f}%',
+                             f'cat{i}.jpg')
+
+for i, filename in enumerate(os.listdir('test/others')):
+    image = ImageHandler.prepare_image(ImageHandler.open_image(f'test/others/{filename}'))
+    prediction = 1 - model.predict(image)[0][0]
+    ImageHandler.save_result(ImageHandler.open_image(f'test/others/{filename}'),
+                             f'{prediction * 100:.2f}%',
+                             f'other{i}.jpg')
