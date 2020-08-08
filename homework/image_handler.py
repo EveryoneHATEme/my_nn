@@ -33,14 +33,14 @@ class ImageHandler:
             elif os.path.isfile(full_sub_path):
                 labels_list.append(full_sub_path.split(os.path.sep)[-2])
                 image = cv2.imread(full_sub_path)
-                filtered_image = cv2.resize(image, (64, 64))
+                filtered_image = cv2.resize(image, (128, 128))
                 images_list.append(filtered_image)
 
         return labels_list, images_list
 
     @staticmethod
     def prepare_image(image):
-        result_image = cv2.resize(image, (64, 64)).astype('float') / 255.0
+        result_image = cv2.resize(image, (128, 128)).astype('float') / 255.0
         return result_image.reshape((1, result_image.shape[0], result_image.shape[1], result_image.shape[2]))
 
     @staticmethod
